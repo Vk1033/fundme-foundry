@@ -8,7 +8,7 @@ error FundMe__NotOwner();
 contract FundMe {
     using PriceConverter for uint256;
 
-    uint public constant MINIMUM_USD = 5e18;
+    uint256 public constant MINIMUM_USD = 5e18;
 
     address[] public funders;
     mapping(address => uint256) public addressToAmountFunded;
@@ -20,24 +20,19 @@ contract FundMe {
     }
 
     function fund() public payable {
-        require(
-            msg.value.getConversionRate() >= MINIMUM_USD,
-            "Didnt send enough ETH"
-        );
+        require(msg.value.getConversionRate() >= MINIMUM_USD, "Didnt send enough ETH");
         funders.push(msg.sender);
         addressToAmountFunded[msg.sender] += msg.value;
     }
 
     function withdraw() public onlyOwner {
-        for (uint i = 0; i < funders.length; i++) {
+        for (uint256 i = 0; i < funders.length; i++) {
             address funder = funders[i];
             addressToAmountFunded[funder] = 0;
         }
         funders = new address[](0);
 
-        (bool success, ) = payable(msg.sender).call{
-            value: address(this).balance
-        }("");
+        (bool success,) = payable(msg.sender).call{value: address(this).balance}("");
         require(success, "Send failed");
     }
 

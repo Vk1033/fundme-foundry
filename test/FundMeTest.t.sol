@@ -16,10 +16,6 @@ contract FundMeTest is Test {
     }
 
     function testOwnerIsMsgSender() public {
-        assertEq(
-            fundMe.i_owner(),
-            address(this),
-            "Owner should be the contract deployer"
-        );
+        assertEq(fundMe.i_owner(), address(this), "Owner should be the contract deployer");
     }
 }
