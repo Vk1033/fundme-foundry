@@ -15,7 +15,7 @@ contract FundMeTest is Test {
         assertEq(fundMe.MINIMUM_USD(), 5e18, "Minimum USD should be 5");
     }
 
-    function testOwnerIsMsgSender() public {
+    function testOwnerIsMsgSender() public view {
         assertEq(fundMe.i_owner(), address(this), "Owner should be the contract deployer");
     }
 }
