@@ -18,4 +18,9 @@ contract FundMeTest is Test {
     function testOwnerIsMsgSender() public view {
         assertEq(fundMe.i_owner(), address(this), "Owner should be the contract deployer");
     }
+
+    function testPriceFeedVersionIsAccurate() public view {
+        uint256 version = fundMe.getVersion();
+        assertEq(version, 4, "Price feed version should be 4");
+    }
 }
