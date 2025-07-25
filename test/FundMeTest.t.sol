@@ -41,4 +41,66 @@ contract FundMeTest is Test {
 
         assertEq(fundMe.getAddressToAmountFunded(USER), SEND_VALUE, "Funded amount should match sent value");
     }
+
+    function testFundAddsUserToFunderArray() public {
+        vm.prank(USER); // Give USER 5 ETH
+        fundMe.fund{value: SEND_VALUE}();
+
+        address funder = fundMe.getFunder(0);
+        assertEq(funder, USER, "Funder should be added to the funder list");
+    }
+
+    modifier funded() {
+        vm.prank(USER); // USER funds first
+        fundMe.fund{value: SEND_VALUE}();
+        _;
+    }
+
+    function testOnlyOwnerCanWithdraw() public funded {
+        vm.expectRevert();
+        vm.prank(USER); // USER tries to withdraw
+        fundMe.withdraw(); // USER tries to withdraw, should fail
+    }
+
+    function testWithdrawWithSingleFunder() public funded {
+        uint256 startingOwnerBalance = fundMe.getOwner().balance;
+        uint256 startingFundMeBalance = address(fundMe).balance;
+
+        vm.prank(fundMe.getOwner()); // Owner withdraws
+        fundMe.withdraw();
+
+        uint256 endingOwnerBalance = fundMe.getOwner().balance;
+        uint256 endingFundMeBalance = address(fundMe).balance;
+        assertEq(
+            endingOwnerBalance,
+            startingOwnerBalance + startingFundMeBalance,
+            "Owner balance should increase by FundMe balance"
+        );
+        assertEq(endingFundMeBalance, 0, "FundMe balance should be zero after withdrawal");
+    }
+
+    function testWithdrawWithMultipleFunders() public funded {
+        uint160 numberOfFunders = 10;
+        uint160 startingFunderIndex = 1;
+
+        for (uint160 i = startingFunderIndex; i < numberOfFunders; i++) {
+            hoax(address(i), SEND_VALUE);
+            fundMe.fund{value: SEND_VALUE}();
+        }
+
+        uint256 startingOwnerBalance = fundMe.getOwner().balance;
+        uint256 startingFundMeBalance = address(fundMe).balance;
+
+        vm.prank(fundMe.getOwner()); // Owner withdraws
+        fundMe.withdraw();
+
+        uint256 endingOwnerBalance = fundMe.getOwner().balance;
+        uint256 endingFundMeBalance = address(fundMe).balance;
+        assertEq(
+            endingOwnerBalance,
+            startingOwnerBalance + startingFundMeBalance,
+            "Owner balance should increase by FundMe balance"
+        );
+        assertEq(endingFundMeBalance, 0, "FundMe balance should be zero after withdrawal");
+    }
 }
