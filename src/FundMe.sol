@@ -11,8 +11,8 @@ contract FundMe {
 
     uint256 public constant MINIMUM_USD = 5e18;
 
-    address[] public funders;
-    mapping(address => uint256) public addressToAmountFunded;
+    address[] private s_funders;
+    mapping(address => uint256) private s_addressToAmountFunded;
 
     address public immutable i_owner;
     AggregatorV3Interface public s_priceFeed;
@@ -24,23 +24,19 @@ contract FundMe {
 
     function fund() public payable {
         require(msg.value.getConversionRate(s_priceFeed) >= MINIMUM_USD, "Didnt send enough ETH");
-        funders.push(msg.sender);
-        addressToAmountFunded[msg.sender] += msg.value;
+        s_funders.push(msg.sender);
+        s_addressToAmountFunded[msg.sender] += msg.value;
     }
 
     function withdraw() public onlyOwner {
-        for (uint256 i = 0; i < funders.length; i++) {
-            address funder = funders[i];
-            addressToAmountFunded[funder] = 0;
+        for (uint256 i = 0; i < s_funders.length; i++) {
+            address funder = s_funders[i];
+            s_addressToAmountFunded[funder] = 0;
         }
-        funders = new address[](0);
+        s_funders = new address[](0);
 
         (bool success,) = payable(msg.sender).call{value: address(this).balance}("");
         require(success, "Send failed");
-    }
-
-    function getVersion() public view returns (uint256) {
-        return s_priceFeed.version();
     }
 
     modifier onlyOwner() {
@@ -56,5 +52,28 @@ contract FundMe {
 
     fallback() external payable {
         fund();
+    }
+
+    /**
+     * Getter Functions
+     */
+    function getAddressToAmountFunded(address fundingAddress) public view returns (uint256) {
+        return s_addressToAmountFunded[fundingAddress];
+    }
+
+    function getVersion() public view returns (uint256) {
+        return s_priceFeed.version();
+    }
+
+    function getFunder(uint256 index) public view returns (address) {
+        return s_funders[index];
+    }
+
+    function getOwner() public view returns (address) {
+        return i_owner;
+    }
+
+    function getPriceFeed() public view returns (AggregatorV3Interface) {
+        return s_priceFeed;
     }
 }
